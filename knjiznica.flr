@@ -1,0 +1,243 @@
+//u ovoj bazi znanja implementirana su temeljna poslovna pravila jedne knjižnice koja se dijele na pravila za korisnike i zaposlenike (autor Matea Adamović)
+//kako bi prikazali funkcioniranje pravila uneseni su i  primjeri instanci korisnika, zaposlenika i knjiga 
+
+//definiranje osobe kao nadklase za korisnike i zaposlenike
+
+osoba[
+       ime => \string,
+       prezime => \string,
+       adresa => \string,
+       godiste => \integer
+     ].
+
+//definiranje klase korisnik s atributima i metodama u kojima se sadržana poslovna pravila
+//knjižnice koja se odnose na korisnike
+
+korisnik :: osoba[
+		   kategorija => \string,
+		   posudeno_prije_dana => \integer,
+		   knjige => knjiga,
+		   broj_knjiga => \integer,
+		   clanarina => \integer,
+		   zakasnina => \float,
+		   moze_posuditi(\integer) => \integer
+		 ].
+
+//u obliku pravila definiramo metode clanarina,zakasnina i moze_posuditi koje obuhvaćaju poslovna pravila knjižnice
+//vezana uz definiranje cijene clanarine, određivanje zakasnine korisnika
+//te koliko još knjiga mogu posuditi s obzirom na ono što je trenunto kod njih
+
+?korisnik[clanarina->?clanarina]:-
+	?korisnik[kategorija->?kategorija],
+	?kategorija == 'odrasli' -->> ?clanarina \is 7; ?clanarina \is 4.
+
+?korisnik[zakasnina->?zakasnina]:-
+	?korisnik[posudeno_prije_dana->?rok],
+	?korisnik[broj_knjiga->?broj_knjiga],
+	?rok > 21 -->> ?zakasnina \is float(?rok-21)*float(?broj_knjiga)*0.1; ?zakasnina \is 0.  
+
+?korisnik[moze_posuditi(?max_broj)->?moze_posuditi]:-
+	?korisnik[broj_knjiga->?broj_knjiga],
+	?broj_knjiga < ?max_broj -->> ?moze_posuditi \is ?max_broj - ?broj_knjiga; ?moze_posuditi \is 0.
+
+
+//definiranje klase knjiga čije se instance koriste u listi kod korisnika
+
+knjiga[
+	naslov => \string,
+	prezime_autora => \string,
+	godina_izdanja => \integer,
+	status => \string
+      ].
+
+//definiranje klase zaposlenik (druga podklasa klase osoba)
+
+zaposlenik :: osoba[
+		     radno_mjesto => \string,
+		     satnica => \integer,
+		     godine_staza => \integer,
+		     radno_vrijeme => struct,
+		     slozenost => \string,
+		     udaljenost => \float,
+		     placa(\integer) => \integer,
+		     prijevoz(\float) => \float,
+		     godisnji(\integer) => \integer
+		   ].
+
+//u obliku pravila definiramo metode placa,prijevoz i godisnji koje obuhvaćaju poslovna pravila
+//knjižnice vezana uz definiranje plaće, troškova prijevoza zaposlenika te dopušteni godišnji odmor
+
+?zaposlenik[placa(?broj_sati) -> ?placa]:-
+	?zaposlenik[satnica -> ?satnica],
+	?placa \is ?broj_sati * ?satnica.
+
+?zaposlenik[prijevoz(?naknada_po_kilometru)->?prijevoz]:-
+	?zaposlenik[udaljenost->?udaljenost],
+	?udaljenost >= 2 -->> ?prijevoz \is ?naknada_po_kilometru * ?udaljenost;?prijevoz \is 0 .
+
+?zaposlenik[godisnji(?min_godisnji)->?godisnji]:-
+	?zaposlenik[slozenost->?slozenost],	
+	?slozenost == 'VSS' -->> ?godisnji \is ?min_godisnji + 5; ?godisnji \is ?min_godisnji + 3.
+
+//unos instanci korisnika knjiznice
+
+pero:korisnik[
+	    ime -> Perica,
+	    prezime -> Brozovic,
+	    adresa -> Sisak,
+	    godiste -> 1971,
+	    kategorija -> odrasli,
+	    knjige -> {sismis, spokoj},  
+	    posudeno_prije_dana -> 32,
+	    broj_knjiga -> 2
+	     ].
+
+silvija:korisnik[
+	    ime -> Silvija,
+	    prezime -> Blaz,
+	    adresa -> Osijek,
+	    godiste -> 1978,
+	    kategorija -> odrasli,
+	    knjige -> {boja, spokoj, dnevnik},   
+	    posudeno_prije_dana -> 12,
+	    broj_knjiga -> 3
+		].
+
+suncana:korisnik[
+	    ime -> Suncana,
+	    prezime -> Mihalic,
+	    adresa -> Zagreb,
+	    godiste -> 2015,
+	    kategorija -> djeca,
+	    knjige -> {harry},  
+	    posudeno_prije_dana -> 32,
+	    broj_knjiga -> 1
+		].
+
+milan:korisnik[
+	    ime -> Milan,
+	    prezime -> Matovina,
+	    adresa -> Petrinja,
+	    godiste -> 1965,
+	    kategorija -> odrasli,
+	    knjige -> {boja, spokoj,simis, dnevnik},   
+	    posudeno_prije_dana -> 20,
+	    broj_knjiga -> 4
+	      ].
+
+denis:korisnik[
+	    ime -> Denis,
+	    prezime -> Dujam,
+	    adresa -> Split,
+	    godiste -> 2008,
+	    kategorija -> djeca,
+	    knjige -> {sismis,harry},   
+	    posudeno_prije_dana -> 15,
+	    broj_knjiga -> 2
+	    ].
+
+
+//unos instanci zaposlenika knjiznice s njihovim atributima
+
+
+ana:zaposlenik[
+		ime->Ana,
+		prezime->Barisic,
+		adresa->Sisak,
+		godiste->1980,
+		radno_mjesto->knjiznicar,
+		satnica->5,
+		godine_staza->5,
+		slozenost->VSS,
+		radno_vrijeme->od_do(7, 15),
+		udaljenost->5
+	      ].
+
+ljiljana:zaposlenik[
+		ime->Ljiljana,
+		prezime->Gojko,
+		adresa->Sisak,
+		godiste->1975,
+		radno_mjesto->knjiznicar,
+		satnica->5,
+		godine_staza->10,
+		slozenost->VSS,
+		radno_vrijeme->od_do(7, 15),
+		udaljenost->10
+		   ].
+
+mirko:zaposlenik[
+		ime->Mirko,
+		prezime->Vinkovic,
+		adresa->Sisak,
+		godiste->1990,
+		radno_mjesto->tehnicar,
+		satnica->4,
+		godine_staza->5,
+		slozenost->SSS,
+		radno_vrijeme->od_do(7, 15),
+		udaljenost->15
+		].
+
+dorian:zaposlenik[
+		ime->Dorian,
+		prezime->Katanovic,
+		adresa->Sisak,
+		godiste->1985,
+		radno_mjesto->tehnicar,
+		satnica->4,
+		godine_staza->10,
+		slozenost->SSS,
+		radno_vrijeme->od_do(7, 15),
+		udaljenost->1
+		 ].
+
+brigita:zaposlenik[
+		ime->Brigita,
+		prezime->Ivic,
+		adresa->Sisak,
+		godiste->1989,
+		radno_mjesto->cistacica,
+		satnica->3,
+		godine_staza->5,
+		slozenost->SSS,
+		radno_vrijeme->od_do(7, 15),
+		udaljenost->20
+	      ].
+	     
+
+//unos instanci knjiga koje korisnici mogu posudivati (mini knjižnica)
+
+simsis:knjiga[
+	       naslov->Sismis,
+	       prezime_autora->Nesbo,
+	       godina_izdanja->2013,
+	       status->dostupna
+	     ].
+
+spokoj:knjiga[
+	       naslov->Spokoj,
+	       prezime_autora->Tanpinar,
+	       godina_izdanja->2015,
+	       status->posudena
+	     ].
+
+boja:knjiga[
+	       naslov->'Boja ubojstva',
+	       prezime_autora->Larkham,
+	       godina_izdanja->2019,
+	       status->rezervirana
+	   ].
+dnevnik:knjiga[
+	       naslov->'Dnevnik solerice',
+	       prezime_autora->Rodic,
+	       godina_izdanja->2012,
+	       status->dostupna
+	      ].
+harry:knjiga[
+	      naslov->'Harry Potter',
+	      prezime_autora->Rowling,
+	      godina_izdanja->1997,
+	      status->rezervirana
+	    ].
+	     
